@@ -6,22 +6,23 @@
 ## Архитектура
 
 ```
-Входящее письмо (multipart)
-        │
-        ▼
-  ┌──────────────┐     Kafka      ┌──────────────────┐
-  │  /emails/extract │──────────►│  Worker (consumer) │
-  │  (FastAPI)    │              │                   │
-  └──────────────┘              │ 1. Classify       │
-                                │ 2. Qualify        │
-                                │ 3. Extract        │
-                                └────────┬──────────┘
-                                         │
-                                         ▼
-                                  ┌──────────────┐
-                                  │   Webhook     │
-                                  │   (CRM/API)   │
-                                  └──────────────┘
+            ┌──────────────────────────────────────┐
+            │  shared-kafka (ZK + Kafka + UI)      │
+            │  _infra/kafka/docker-compose.yml      │
+            └────────────┬─────────────────────────┘
+                         │ kafka:9092
+          ┌──────────────┴──────────────┐
+          │                             │
+  ┌───────▼───────┐           ┌─────────▼─────────┐
+  │ email-extractor│          │ ai-tender-pipeline │
+  │ (FastAPI+Worker)│          │ (API+Worker)      │
+  │ PORT 9002      │          │ PORT 8003          │
+  └───────┬───────┘           └───────────────────┘
+          │ webhook
+          ▼
+   ┌──────────────┐
+   │  CRM/external │
+   └──────────────┘
 ```
 
 ## Этапы обработки
@@ -59,25 +60,24 @@ uvicorn app.main:app --host 0.0.0.0 --port 9002
 python -m app.worker
 ```
 
-### Docker
+### Docker (с общей Kafka)
 
 ```bash
-# Сборка и запуск всех сервисов
-docker compose up --build
+# 1. Запустить Kafka инфраструктуру
+docker compose -f _infra/kafka/docker-compose.yml up -d
 
-# Только API + Worker (если Kafka уже запущен)
-docker compose up api worker
+# 2. Запустить сервисы (переподключаются пока Kafka не готова)
+docker compose up -d
+
+# 3. Kafbat UI для мониторинга Kafka
+# http://localhost:9005
 
 # Остановка
 docker compose down
-
-# С полной очисткой томов
-docker compose down -v
 ```
 
 После запуска:
 - **API**: http://localhost:9002
-- **Kafbat UI**: http://localhost:9005
 
 ## API
 
@@ -157,8 +157,11 @@ docker compose down -v
 
 ```
 email-extraction/
+├── _infra/                  # Инфраструктурные compose (в gitignore)
+│   ├── kafka/docker-compose.yml         # ZK, Kafka, Kafbat UI
+│   └── ai-tender-pipeline/docker-compose.yml  # Соседний проект
 ├── Dockerfile               # Образ для API и Worker
-├── docker-compose.yml       # Оркестрация: ZK, Kafka, UI, API, Worker
+├── docker-compose.yml       # Только API, Worker, webhook-receiver (Kafka внешняя)
 ├── references/              # Исходные демо-скрипты
 ├── uploads/                 # Временное хранение вложений
 ├── app/
