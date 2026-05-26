@@ -142,14 +142,14 @@ docker compose down -v
 | `OPENAI_API_KEY` | — | API ключ OpenAI |
 | `OPENAI_BASE_URL` | `https://api.agentplatform.ru/v1` | Базовый URL |
 | `OPENAI_MODEL` | `openai/gpt-5-mini` | Модель |
-| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9004` | Kafka brokers |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka brokers |
 | `KAFKA_TOPIC_EMAILS` | `email-extraction-tasks` | Топик входящих задач |
 | `KAFKA_CONSUMER_GROUP` | `email-extraction-workers` | Consumer group |
 | `WEBHOOK_URL` | — | URL для результата |
 | `TEST_WEBHOOK_URL` | — | URL для тестового вебхука |
 | `MAX_RETRIES` | 3 | Попыток на LLM вызов |
 | `LOG_LEVEL` | `INFO` | Уровень логирования |
-| `HOST` / `PORT` | `0.0.0.0:9002` | Сервер |
+| `HOST` / `PORT` | `0.0.0.0:8000` | Сервер |
 | `UPLOAD_DIR` | `./uploads` | Папка вложений |
 | `UPLOAD_CLEANUP_HOURS` | 24 | Часов до удаления файлов |
 
